@@ -1,0 +1,1158 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# import lib\n",
+    "import numpy as np\n",
+    "from scipy import stats\n",
+    "from collections import Counter\n",
+    "import pandas as pd\n",
+    "import scipy as sp\n",
+    "from scipy.stats import mode\n",
+    "from sklearn import linear_model\n",
+    "from sklearn.preprocessing import PolynomialFeatures\n",
+    "from sklearn.linear_model import LinearRegression as LinReg\n",
+    "from sklearn.linear_model import Ridge\n",
+    "from sklearn.linear_model import RidgeCV\n",
+    "from sklearn.linear_model import Lasso\n",
+    "from sklearn.linear_model import LassoCV\n",
+    "from sklearn.decomposition import PCA\n",
+    "import matplotlib\n",
+    "import matplotlib.pyplot as plt\n",
+    "from sklearn import discriminant_analysis\n",
+    "from sklearn import preprocessing\n",
+    "import sklearn.discriminant_analysis as da\n",
+    "from sklearn import preprocessing\n",
+    "from sklearn.cross_validation import KFold\n",
+    "from sklearn.cross_validation import cross_val_score\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA\n",
+    "from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis as QDA\n",
+    "from sklearn.neighbors import KNeighborsClassifier as KNN\n",
+    "from sklearn.tree import DecisionTreeClassifier as DecisionTree\n",
+    "from sklearn.ensemble import RandomForestClassifier as RandomForest\n",
+    "from sklearn.svm import SVC\n",
+    "from sklearn.feature_extraction.text import CountVectorizer\n",
+    "from sklearn.linear_model import LogisticRegressionCV as LogRegCV\n",
+    "from sklearn.preprocessing import LabelEncoder\n",
+    "from sklearn.cross_validation import train_test_split\n",
+    "import random\n",
+    "from datetime import datetime\n",
+    "import warnings\n",
+    "warnings.filterwarnings('ignore')\n",
+    "%matplotlib inline"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "listings_df = pd.read_csv('listings.csv', header = 0)\n",
+    "calendar_df = pd.read_csv('calendar.csv', usecols=range(0,4), index_col=False)\n",
+    "reviews_df = pd.read_csv('reviews.csv', header = 0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>id</th>\n",
+       "      <th>name</th>\n",
+       "      <th>neighbourhood_cleansed</th>\n",
+       "      <th>city</th>\n",
+       "      <th>latitude</th>\n",
+       "      <th>longitude</th>\n",
+       "      <th>is_location_exact</th>\n",
+       "      <th>property_type</th>\n",
+       "      <th>room_type</th>\n",
+       "      <th>accommodates</th>\n",
+       "      <th>...</th>\n",
+       "      <th>review_scores_rating</th>\n",
+       "      <th>review_scores_accuracy</th>\n",
+       "      <th>review_scores_cleanliness</th>\n",
+       "      <th>review_scores_checkin</th>\n",
+       "      <th>review_scores_communication</th>\n",
+       "      <th>review_scores_location</th>\n",
+       "      <th>review_scores_value</th>\n",
+       "      <th>host_listing_count</th>\n",
+       "      <th>price</th>\n",
+       "      <th>extra_people</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1069266</td>\n",
+       "      <td>Stay like a real New Yorker!</td>\n",
+       "      <td>Midtown East</td>\n",
+       "      <td>New York</td>\n",
+       "      <td>40.756852</td>\n",
+       "      <td>-73.964754</td>\n",
+       "      <td>t</td>\n",
+       "      <td>Apartment</td>\n",
+       "      <td>Entire home/apt</td>\n",
+       "      <td>2</td>\n",
+       "      <td>...</td>\n",
+       "      <td>86.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>7.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>160.0</td>\n",
+       "      <td>0.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1846722</td>\n",
+       "      <td>Apartment 20 Minutes Times Square</td>\n",
+       "      <td>Hamilton Heights</td>\n",
+       "      <td>New York</td>\n",
+       "      <td>40.830599</td>\n",
+       "      <td>-73.941014</td>\n",
+       "      <td>f</td>\n",
+       "      <td>Apartment</td>\n",
+       "      <td>Entire home/apt</td>\n",
+       "      <td>10</td>\n",
+       "      <td>...</td>\n",
+       "      <td>85.0</td>\n",
+       "      <td>8.0</td>\n",
+       "      <td>8.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>8.0</td>\n",
+       "      <td>7.0</td>\n",
+       "      <td>8.0</td>\n",
+       "      <td>2</td>\n",
+       "      <td>105.0</td>\n",
+       "      <td>50.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2061725</td>\n",
+       "      <td>Option of 2 Beds w Private Bathroom</td>\n",
+       "      <td>Bushwick</td>\n",
+       "      <td>Brooklyn</td>\n",
+       "      <td>40.692189</td>\n",
+       "      <td>-73.924120</td>\n",
+       "      <td>t</td>\n",
+       "      <td>Apartment</td>\n",
+       "      <td>Private room</td>\n",
+       "      <td>2</td>\n",
+       "      <td>...</td>\n",
+       "      <td>98.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>4</td>\n",
+       "      <td>58.0</td>\n",
+       "      <td>12.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>44974</td>\n",
+       "      <td>Charming Bright West Village Studio</td>\n",
+       "      <td>West Village</td>\n",
+       "      <td>New York</td>\n",
+       "      <td>40.734751</td>\n",
+       "      <td>-74.002592</td>\n",
+       "      <td>t</td>\n",
+       "      <td>Apartment</td>\n",
+       "      <td>Entire home/apt</td>\n",
+       "      <td>2</td>\n",
+       "      <td>...</td>\n",
+       "      <td>96.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>185.0</td>\n",
+       "      <td>0.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>4701675</td>\n",
+       "      <td>Charming Apartment in Chelsea</td>\n",
+       "      <td>Chelsea</td>\n",
+       "      <td>New York</td>\n",
+       "      <td>40.745282</td>\n",
+       "      <td>-73.997836</td>\n",
+       "      <td>t</td>\n",
+       "      <td>Apartment</td>\n",
+       "      <td>Entire home/apt</td>\n",
+       "      <td>2</td>\n",
+       "      <td>...</td>\n",
+       "      <td>100.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>10.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>195.0</td>\n",
+       "      <td>0.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>5 rows × 32 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "        id                                 name neighbourhood_cleansed  \\\n",
+       "0  1069266        Stay like a real New Yorker!            Midtown East   \n",
+       "1  1846722    Apartment 20 Minutes Times Square       Hamilton Heights   \n",
+       "2  2061725  Option of 2 Beds w Private Bathroom               Bushwick   \n",
+       "3    44974  Charming Bright West Village Studio           West Village   \n",
+       "4  4701675        Charming Apartment in Chelsea                Chelsea   \n",
+       "\n",
+       "       city   latitude  longitude is_location_exact property_type  \\\n",
+       "0  New York  40.756852 -73.964754                 t     Apartment   \n",
+       "1  New York  40.830599 -73.941014                 f     Apartment   \n",
+       "2  Brooklyn  40.692189 -73.924120                 t     Apartment   \n",
+       "3  New York  40.734751 -74.002592                 t     Apartment   \n",
+       "4  New York  40.745282 -73.997836                 t     Apartment   \n",
+       "\n",
+       "         room_type  accommodates      ...       review_scores_rating  \\\n",
+       "0  Entire home/apt             2      ...                       86.0   \n",
+       "1  Entire home/apt            10      ...                       85.0   \n",
+       "2     Private room             2      ...                       98.0   \n",
+       "3  Entire home/apt             2      ...                       96.0   \n",
+       "4  Entire home/apt             2      ...                      100.0   \n",
+       "\n",
+       "   review_scores_accuracy  review_scores_cleanliness review_scores_checkin  \\\n",
+       "0                     9.0                        7.0                   9.0   \n",
+       "1                     8.0                        8.0                   9.0   \n",
+       "2                    10.0                       10.0                  10.0   \n",
+       "3                    10.0                        9.0                  10.0   \n",
+       "4                    10.0                       10.0                  10.0   \n",
+       "\n",
+       "   review_scores_communication  review_scores_location  review_scores_value  \\\n",
+       "0                          9.0                    10.0                  9.0   \n",
+       "1                          8.0                     7.0                  8.0   \n",
+       "2                         10.0                     9.0                 10.0   \n",
+       "3                         10.0                    10.0                  9.0   \n",
+       "4                         10.0                    10.0                 10.0   \n",
+       "\n",
+       "   host_listing_count  price  extra_people  \n",
+       "0                   1  160.0           0.0  \n",
+       "1                   2  105.0          50.0  \n",
+       "2                   4   58.0          12.0  \n",
+       "3                   1  185.0           0.0  \n",
+       "4                   1  195.0           0.0  \n",
+       "\n",
+       "[5 rows x 32 columns]"
+      ]
+     },
+     "execution_count": 3,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# drop some data that thas lots of missing values\n",
+    "listings_modified1 = listings_df.drop(['square_feet','weekly_price','monthly_price', 'first_review', 'last_review'], axis = 1)\n",
+    "\n",
+    "listings_modified2 = listings_modified1.drop(['country','state','market'], axis = 1)\n",
+    "# picture_url, host_id, host_picture_url, neighbourhood\n",
+    "# host_names, host_since, street, zipcode, calendar_updated, calendar_last_scraped\n",
+    "listings_modified3 = listings_modified2.drop(['picture_url', 'host_id','host_picture_url', \n",
+    "                                              'host_name', 'host_since','street', 'zipcode', \n",
+    "                                              'calendar_updated', 'calendar_last_scraped',\n",
+    "                                              'neighbourhood', 'scrape_id', 'last_scraped'], axis = 1)\n",
+    "# clean up prices, delete dollar sign\n",
+    "prices_tmp = listings_modified3.price\n",
+    "extra_tmp = listings_modified3.extra_people\n",
+    "\n",
+    "prices = []\n",
+    "extra = []\n",
+    "# delete all ,\n",
+    "for i in prices_tmp:\n",
+    "    prices.append(i.replace(',', ''))\n",
+    "    \n",
+    "for i in extra_tmp:\n",
+    "    extra.append(i.replace(',', ''))\n",
+    "\n",
+    "prices = [float(i[1:]) for i in prices]\n",
+    "extra = [float(i[1:]) for i in extra]\n",
+    "\n",
+    "price_1 = np.percentile(prices, 25)\n",
+    "price_2 = np.percentile(prices, 50)\n",
+    "price_3 = np.percentile(prices, 75)\n",
+    "price_high = np.percentile(prices, 95)\n",
+    "\n",
+    "# # drop the old $ price and replace with float\n",
+    "listings_modified4 = listings_modified3.drop(['price', 'extra_people'], axis = 1)\n",
+    "listings_modified4['price'] = prices\n",
+    "listings_modified4['extra_people'] = extra\n",
+    "# drop outlier prices\n",
+    "listings_modified4 = listings_modified4[listings_modified4['price'] <= price_high]\n",
+    "listings_modified4.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# reset index\n",
+    "listings_modified4.index = range(0, len(listings_modified4))\n",
+    "\n",
+    "# standardize longitude and latitude\n",
+    "min_max_scaler = preprocessing.MinMaxScaler()\n",
+    "x_transformed = min_max_scaler.fit_transform(listings_modified4.latitude.values)\n",
+    "min_max_scaler = preprocessing.MinMaxScaler()\n",
+    "y_transformed = min_max_scaler.fit_transform(listings_modified4.longitude.values)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(26024, 32)"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# fill missing values by randomly sampling observed values\n",
+    "def fill_by_sampling(df_input):\n",
+    "    df = df_input.copy()\n",
+    "    for col in df.columns:\n",
+    "        for i in range(len(df[col])):\n",
+    "            if pd.isnull(df[col].values[i]):\n",
+    "                df.set_value(i, col, random.choice(df[col].dropna().values))\n",
+    "    return df\n",
+    "\n",
+    "# fill in values\n",
+    "df_filled_random = fill_by_sampling(listings_modified4)\n",
+    "df_filled_random.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# drop \"city\", \"latitude\",\"longitude\" because they're correlated with neighborhood\n",
+    "df_filled_random2 = df_filled_random.drop(['city','latitude','longitude','name'], axis = 1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# encode categorical varibles into numerical values\n",
+    "# neighborhood\n",
+    "le = preprocessing.LabelEncoder()\n",
+    "le.fit(df_filled_random2.neighbourhood_cleansed.values)\n",
+    "neigh_transformed = le.transform(df_filled_random2.neighbourhood_cleansed.values)\n",
+    "\n",
+    "# location exact\n",
+    "le = preprocessing.LabelEncoder()\n",
+    "le.fit(df_filled_random2.is_location_exact.values)\n",
+    "location_exact_transformed = le.transform(df_filled_random2.is_location_exact.values)\n",
+    "\n",
+    "# property type\n",
+    "le = preprocessing.LabelEncoder()\n",
+    "le.fit(df_filled_random2.property_type.values)\n",
+    "property_type_transformed = le.transform(df_filled_random2.property_type.values)\n",
+    "\n",
+    "# bed type\n",
+    "le = preprocessing.LabelEncoder()\n",
+    "le.fit(df_filled_random2.bed_type.values)\n",
+    "bed_type_transformed = le.transform(df_filled_random2.bed_type.values)\n",
+    "\n",
+    "# room type\n",
+    "le = preprocessing.LabelEncoder()\n",
+    "le.fit(df_filled_random2.room_type.values)\n",
+    "room_type_transformed = le.transform(df_filled_random2.room_type.values)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# drop categorical columns and append the above\n",
+    "df_filled_random3 = df_filled_random2.drop(['neighbourhood_cleansed', 'is_location_exact', 'property_type', 'bed_type', 'room_type'], axis=1)\n",
+    "df_filled_random3['neigh_transformed'] =neigh_transformed\n",
+    "df_filled_random3['location_exact_transformed'] =location_exact_transformed\n",
+    "df_filled_random3['property_type_transformed'] =property_type_transformed\n",
+    "df_filled_random3['bed_type_transformed'] =bed_type_transformed\n",
+    "df_filled_random3['room_type_transformed'] =room_type_transformed\n",
+    "\n",
+    "# drop neighboorhood \n",
+    "df_filled_random3 = df_filled_random3.drop(['neigh_transformed'], axis=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# apply tree-based models \n",
+    "# we split them up into 5 intervals, so intervals are small but still allow us to retain accuracy\n",
+    "price_1 = np.percentile(df_filled_random3.price, 20)\n",
+    "price_2 = np.percentile(df_filled_random3.price, 40)\n",
+    "price_3 = np.percentile(df_filled_random3.price, 60)\n",
+    "price_4 = np.percentile(df_filled_random3.price, 80)\n",
+    "\n",
+    "\n",
+    "# 5 dfs\n",
+    "df_class1 = df_filled_random3[df_filled_random3['price'] <= price_1]\n",
+    "df_class2 = df_filled_random3[(df_filled_random3['price'] > price_1) & (df_filled_random3['price'] <= price_2)]\n",
+    "df_class3 = df_filled_random3[(df_filled_random3['price'] > price_2) & (df_filled_random3['price'] <= price_3)]\n",
+    "df_class4 = df_filled_random3[(df_filled_random3['price'] > price_3) & (df_filled_random3['price'] <= price_4)]\n",
+    "df_class5 = df_filled_random3[(df_filled_random3['price'] > price_4)]\n",
+    "\n",
+    "# make a new DF with new classes\n",
+    "df_new = df_filled_random3.copy()\n",
+    "df_new['price_tag'] = np.zeros(len(df_filled_random3.price))\n",
+    "\n",
+    "# reset index\n",
+    "df_new.index = range(0, len(df_new))\n",
+    "\n",
+    "# set\n",
+    "\n",
+    "def set_price_dummy(df, num):\n",
+    "    for i in df['id'].values:\n",
+    "        df_new.set_value(df_new.loc[df_new['id'] == i].index, 'price_tag', num)\n",
+    "        \n",
+    "set_price_dummy(df_class1, 1)\n",
+    "set_price_dummy(df_class2, 2)\n",
+    "set_price_dummy(df_class3, 3)\n",
+    "set_price_dummy(df_class4, 4)\n",
+    "set_price_dummy(df_class5, 5)\n",
+    "\n",
+    "\n",
+    "# drop and save price\n",
+    "dropped_price = df_new.price\n",
+    "df_listings_cleaned = df_new.drop('price', axis=1)\n",
+    "y_df_listings = df_listings_cleaned['price_tag']\n",
+    "x_df_listings = df_listings_cleaned.drop('price_tag',axis=1)\n",
+    "\n",
+    "x_df_listings['x_transformed'] = x_transformed\n",
+    "x_df_listings['y_transformed'] = y_transformed\n",
+    "\n",
+    "# turn the set into train and test\n",
+    "# get X and Y\n",
+    "X = x_df_listings.values\n",
+    "y = y_df_listings.values"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "(18216, 28)\n",
+      "(18216, 27)\n"
+     ]
+    }
+   ],
+   "source": [
+    "# test and train split\n",
+    "x_train_withid, x_test_withid, y_train_listings, y_test_listings = train_test_split(X, y, test_size = 0.30)\n",
+    "x_train_listings = x_train_withid[:,1:]\n",
+    "x_test_listings = x_test_withid[:,1:]\n",
+    "print x_train_withid.shape\n",
+    "print x_train_listings.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.535988729508\n",
+      "0.774593763724\n"
+     ]
+    }
+   ],
+   "source": [
+    "# our chosen model\n",
+    "best_trees, best_depth = 120, 12\n",
+    "model = RandomForest(n_estimators=best_trees, max_depth=best_depth)\n",
+    "model.fit(x_train_listings, y_train_listings)\n",
+    "print model.score(x_test_listings, y_test_listings)\n",
+    "print model.score(x_train_listings,y_train_listings)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# record train and test ids for future use\n",
+    "train_ids = x_train_withid[:,0]\n",
+    "test_ids = x_test_withid[:,0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "26024"
+      ]
+     },
+     "execution_count": 18,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# sanity check\n",
+    "len(train_ids) + len(test_ids)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# build reviews model\n",
+    "sub_reviews = reviews_df[['listing_id','comments']]\n",
+    "sub_reviews.head()\n",
+    "# id & name of listing from listings.csv\n",
+    "sub_listings = listings_df[['id','name','price']]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "list_reviews = [None] * len(sub_listings)\n",
+    "for i in range(len(sub_listings)):\n",
+    "    ID = sub_listings['id'][i]\n",
+    "    if len(sub_reviews[sub_reviews.listing_id == ID]) > 0: \n",
+    "        list_reviews[i] = sub_reviews[sub_reviews.listing_id == ID].comments.values\n",
+    "        for j in range(len(list_reviews[i])):\n",
+    "            text = []\n",
+    "            text.append(list_reviews[i][j])\n",
+    "        list_reviews[i] = text[0]\n",
+    "    else: \n",
+    "        list_reviews[i] = None"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "sub_listings['reviews'] = list_reviews\n",
+    "sub_listings['combined'] = sub_listings.name.astype(str).str.cat(sub_listings.reviews.astype(str), sep=',')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "danish dutch english finnish french german hungarian italian norwegian porter portuguese romanian russian spanish swedish\n",
+      "stay like a real new yorker! ,michael was the perfect host. had everything ready and prepared for arrival and departure. apartment was exactly what i wanted close to un in a good neighborhood. would stay again\n",
+      "\n",
+      "27392\n"
+     ]
+    },
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>id</th>\n",
+       "      <th>name</th>\n",
+       "      <th>price</th>\n",
+       "      <th>reviews</th>\n",
+       "      <th>combined</th>\n",
+       "      <th>stems</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1069266</td>\n",
+       "      <td>Stay like a real New Yorker!</td>\n",
+       "      <td>$160.00</td>\n",
+       "      <td>Michael was the perfect host. Had everything r...</td>\n",
+       "      <td>Stay like a real New Yorker! ,Michael was the ...</td>\n",
+       "      <td>stay like a real new yorker! ,michael was the ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1846722</td>\n",
+       "      <td>Apartment 20 Minutes Times Square</td>\n",
+       "      <td>$105.00</td>\n",
+       "      <td>Denise is a really nice woman!</td>\n",
+       "      <td>Apartment 20 Minutes Times Square,Denise is a ...</td>\n",
+       "      <td>apartment 20 minutes times square,denise is a ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2061725</td>\n",
+       "      <td>Option of 2 Beds w Private Bathroom</td>\n",
+       "      <td>$58.00</td>\n",
+       "      <td>I had spent one entire month at Miao's with a ...</td>\n",
+       "      <td>Option of 2 Beds w Private Bathroom,I had spen...</td>\n",
+       "      <td>option of 2 beds w private bathroom,i had spen...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>44974</td>\n",
+       "      <td>Charming Bright West Village Studio</td>\n",
+       "      <td>$185.00</td>\n",
+       "      <td>We had a great stay at Sara's flat in the West...</td>\n",
+       "      <td>Charming Bright West Village Studio,We had a g...</td>\n",
+       "      <td>charming bright west village studio,we had a g...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>4701675</td>\n",
+       "      <td>Charming Apartment in Chelsea</td>\n",
+       "      <td>$195.00</td>\n",
+       "      <td>We had a wonderful stay at Charles' place. It ...</td>\n",
+       "      <td>Charming Apartment in Chelsea,We had a wonderf...</td>\n",
+       "      <td>charming apartment in chelsea,we had a wonderf...</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "        id                                 name    price  \\\n",
+       "0  1069266        Stay like a real New Yorker!   $160.00   \n",
+       "1  1846722    Apartment 20 Minutes Times Square  $105.00   \n",
+       "2  2061725  Option of 2 Beds w Private Bathroom   $58.00   \n",
+       "3    44974  Charming Bright West Village Studio  $185.00   \n",
+       "4  4701675        Charming Apartment in Chelsea  $195.00   \n",
+       "\n",
+       "                                             reviews  \\\n",
+       "0  Michael was the perfect host. Had everything r...   \n",
+       "1                     Denise is a really nice woman!   \n",
+       "2  I had spent one entire month at Miao's with a ...   \n",
+       "3  We had a great stay at Sara's flat in the West...   \n",
+       "4  We had a wonderful stay at Charles' place. It ...   \n",
+       "\n",
+       "                                            combined  \\\n",
+       "0  Stay like a real New Yorker! ,Michael was the ...   \n",
+       "1  Apartment 20 Minutes Times Square,Denise is a ...   \n",
+       "2  Option of 2 Beds w Private Bathroom,I had spen...   \n",
+       "3  Charming Bright West Village Studio,We had a g...   \n",
+       "4  Charming Apartment in Chelsea,We had a wonderf...   \n",
+       "\n",
+       "                                               stems  \n",
+       "0  stay like a real new yorker! ,michael was the ...  \n",
+       "1  apartment 20 minutes times square,denise is a ...  \n",
+       "2  option of 2 beds w private bathroom,i had spen...  \n",
+       "3  charming bright west village studio,we had a g...  \n",
+       "4  charming apartment in chelsea,we had a wonderf...  "
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# import NLTK \n",
+    "from nltk.stem.snowball import SnowballStemmer\n",
+    "print(\" \".join(SnowballStemmer.languages))\n",
+    "# stemmer for english\n",
+    "stemmer = SnowballStemmer('english', ignore_stopwords=True)\n",
+    "print stemmer.stem(sub_listings['combined'][0])\n",
+    "stems = []\n",
+    "for i in range(len(sub_listings)):\n",
+    "    cleaned = unicode(sub_listings['combined'][i], \"utf-8\")\n",
+    "#     cleaned = sub_listings['combined'][i].replace('\\n','').replace('\\u','')\n",
+    "    stemmed = stemmer.stem(cleaned)\n",
+    "    stems.append(stemmed)\n",
+    "print len(stems)\n",
+    "\n",
+    "sub_listings['stems'] = stems\n",
+    "sub_listings.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# only run once\n",
+    "sub_listings.drop(['price'], axis = 1)\n",
+    "sub_listings['price'] = prices\n",
+    "\n",
+    "# drop outlier prices\n",
+    "sub_listings = sub_listings[sub_listings['price'] <= price_high]\n",
+    "\n",
+    "# reset index\n",
+    "sub_listings.index = range(len(sub_listings))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# function to set dummy varibles for price tags\n",
+    "def set_price_dummy(df, num):\n",
+    "    for i in df.id.values:\n",
+    "        sub_listings_new.set_value(sub_listings_new.loc[sub_listings_new.id == i].index, 'price_tag', num)\n",
+    "\n",
+    "sub_listings_new = sub_listings.drop(['name', 'reviews', 'combined'], axis = 1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# we split them up into 5 intervals, so intervals are small but still allow us to retain accuracy\n",
+    "price_1 = np.percentile(sub_listings_new.price, 20)\n",
+    "price_2 = np.percentile(sub_listings_new.price, 40)\n",
+    "price_3 = np.percentile(sub_listings_new.price, 60)\n",
+    "price_4 = np.percentile(sub_listings_new.price, 80)\n",
+    "\n",
+    "# 5 dfs\n",
+    "df_class1 = sub_listings_new[sub_listings_new['price'] <= price_1]\n",
+    "df_class2 = sub_listings_new[(sub_listings_new['price'] > price_1) & (sub_listings_new['price'] <= price_2)]\n",
+    "df_class3 = sub_listings_new[(sub_listings_new['price'] > price_2) & (sub_listings_new['price'] <= price_3)]\n",
+    "df_class4 = sub_listings_new[(sub_listings_new['price'] > price_3) & (sub_listings_new['price'] <= price_4)]\n",
+    "df_class5 = sub_listings_new[(sub_listings_new['price'] > price_4)]\n",
+    "\n",
+    "# make a new DF with new classes\n",
+    "sub_listings_new['price_tag'] = np.zeros(len(sub_listings_new.price))\n",
+    "\n",
+    "# set\n",
+    "set_price_dummy(df_class1, 1)\n",
+    "set_price_dummy(df_class2, 2)\n",
+    "set_price_dummy(df_class3, 3)\n",
+    "set_price_dummy(df_class4, 4)\n",
+    "set_price_dummy(df_class5, 5)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>id</th>\n",
+       "      <th>price_tag</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1069266</td>\n",
+       "      <td>4.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1846722</td>\n",
+       "      <td>3.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2061725</td>\n",
+       "      <td>1.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>44974</td>\n",
+       "      <td>4.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>4701675</td>\n",
+       "      <td>4.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "        id  price_tag\n",
+       "0  1069266        4.0\n",
+       "1  1846722        3.0\n",
+       "2  2061725        1.0\n",
+       "3    44974        4.0\n",
+       "4  4701675        4.0"
+      ]
+     },
+     "execution_count": 30,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# drop and save price\n",
+    "dropped_price = sub_listings_new.price\n",
+    "reviews_cleaned = sub_listings_new.drop(['price'], axis=1)\n",
+    "y_df_reviews = reviews_cleaned[['id','price_tag']]\n",
+    "x_df_reviews = reviews_cleaned[['id', 'stems']]\n",
+    "y_df_reviews.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "train_indices = [x_df_reviews[x_df_reviews.id==i].index for i in x_df_reviews.id.values if i in train_ids]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# only need the below once\n",
+    "train_indices = [i.values for i in train_indices]\n",
+    "train_indices = [i for i in train_indices]\n",
+    "train_indices = [int(i) for i in train_indices]\n",
+    "get test indices\n",
+    "test_indices = [i for i in range(len(y_df_reviews)) if i not in train_indices]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "tmp = x_df_reviews.drop('id', axis=1)\n",
+    "x_df_reviews_noid = [i for i in tmp.stems.values]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# vectorize\n",
+    "vectorizer = CountVectorizer(stop_words='english', min_df=3)\n",
+    "corpus = vectorizer.fit_transform(x_df_reviews_noid)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "x = corpus.toarray()\n",
+    "\n",
+    "x_train_reviews = x[train_indices]\n",
+    "y_train_reviews = y_df_reviews.price_tag.values[train_indices]\n",
+    "\n",
+    "x_test_reviews = x[test_indices]\n",
+    "y_test_reviews = y_df_reviews.price_tag.values[test_indices]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Accuracy on overall test set: 0.37487192623\n",
+      "Accuracy on class 1 in test set: 0.619325551232\n",
+      "Accuracy on class 2 in test set: 0.223081882656\n",
+      "Accuracy on class 3 in test set: 0.37084398977\n",
+      "Accuracy on class 4 in test set: 0.269076305221\n",
+      "Accuracy on class 5 in test set: 0.394154818325\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Generate array of L2 regularization parameters\n",
+    "regularization = 10.**np.arange(-10, 5)\n",
+    "\n",
+    "#Fit logistic model with cross validation to select the optimal regularization parameter\n",
+    "logistic = LogRegCV(cv=5, \n",
+    "                    penalty='l2', \n",
+    "                    Cs=regularization, \n",
+    "                    solver='liblinear', \n",
+    "                    n_jobs=4)\n",
+    "logistic.fit(x_train_reviews, y_train_reviews)\n",
+    "\n",
+    "#Print results\n",
+    "print 'Accuracy on overall test set:', logistic.score(x_test_reviews, y_test_reviews)\n",
+    "print 'Accuracy on class 1 in test set:', logistic.score(x_test_reviews[y_test_reviews == 1], y_test_reviews[y_test_reviews == 1])\n",
+    "print 'Accuracy on class 2 in test set:', logistic.score(x_test_reviews[y_test_reviews == 2], y_test_reviews[y_test_reviews == 2])\n",
+    "print 'Accuracy on class 3 in test set:', logistic.score(x_test_reviews[y_test_reviews == 3], y_test_reviews[y_test_reviews == 3])\n",
+    "print 'Accuracy on class 4 in test set:', logistic.score(x_test_reviews[y_test_reviews == 4], y_test_reviews[y_test_reviews == 4])\n",
+    "print 'Accuracy on class 5 in test set:', logistic.score(x_test_reviews[y_test_reviews == 5], y_test_reviews[y_test_reviews == 5])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# combination model -> return weighted prediction\n",
+    "# input: two lists of predictions\n",
+    "# weights are 59/41\n",
+    "def combine_model(pred1, pred2):\n",
+    "    if len(pred1) != len(pred2):\n",
+    "        return 'error'\n",
+    "    result = []\n",
+    "    for i in range(len(pred1)):\n",
+    "        result.append(float(pred1[i])*0.59 + float(pred2[i])*0.41)\n",
+    "    result = [round(i) for i in result]\n",
+    "    return result\n",
+    "\n",
+    "# function to get accuracy\n",
+    "def get_accuracy(y_pred, y_test):\n",
+    "    count = 0\n",
+    "    for i in range(len(y_pred)):\n",
+    "        if y_pred[i] == y_test[i]:\n",
+    "            count += 1\n",
+    "    return float(count) / float(len(y_pred))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "pred1 = model.predict(x_test_listings)\n",
+    "pred2 = logistic.predict(x_test_reviews)\n",
+    "final_pred = combine_model(pred1, pred2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 56,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.36501024590163933"
+      ]
+     },
+     "execution_count": 56,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "get_accuracy(final_pred, y_test_listings)\n",
+    "# which is worse than using listings model alone"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 58,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "seasonality_table = np.loadtxt('test.out')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 62,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[73.609468108585304, 98.609468108585304]"
+      ]
+     },
+     "execution_count": 62,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# example on how to use seasonality table\n",
+    "date = '2015-01-01'\n",
+    "# first day of the year, so \n",
+    "surge_price = seasonality_table[0]\n",
+    "# we look at the scrape_date of the prediction for in listings.df\n",
+    "# if the scrape_date is 2015-01-02 \n",
+    "surge_price_scrape = seasonality_table[1]\n",
+    "# if the prediction falls into class 2, namely [75-100]\n",
+    "# then return\n",
+    "class2 = [75, 100]\n",
+    "result = [class2[0]-surge_price_scrape+surge_price, class2[1]-surge_price_scrape+surge_price]\n",
+    "result"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "anaconda-cloud": {},
+  "kernelspec": {
+   "display_name": "Python [conda root]",
+   "language": "python",
+   "name": "conda-root-py"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.9"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
